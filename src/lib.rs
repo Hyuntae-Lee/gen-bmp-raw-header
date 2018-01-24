@@ -48,7 +48,7 @@ pub fn read_bmp_list(out_list: &mut Vec<String>, dir_path: String) -> bool {
             continue;
         }
 
-        // convert to string format
+        // string format
         let path_str;
         if let Some(x) = path_buf.to_str() {
             path_str = x;
@@ -57,18 +57,20 @@ pub fn read_bmp_list(out_list: &mut Vec<String>, dir_path: String) -> bool {
             continue;
         }
 
-        // only accept bmp format
+        // only bmp file is acceptable
         if let Some(extension) = path_buf.extension() {
             if extension != "bmp" {
                 continue;
             }
         }
         else {
+            // scan sub directries also
             if read_bmp_list(&mut path_list, path_str.to_string()) == true {
                 continue;
             }
         }
 
+        // homogenize expression
         path_list.push(path_str.to_string().replace("\\", "/"));
     }
 
