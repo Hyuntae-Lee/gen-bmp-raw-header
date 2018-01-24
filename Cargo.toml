@@ -1,0 +1,6 @@
+[package]
+name = "gen-bmp-raw-header"
+version = "0.1.0"
+authors = ["htlee"]
+
+[dependencies]
