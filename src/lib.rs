@@ -1,7 +1,7 @@
 use std::env;
 use std::fs;
 
-pub fn parse_input(out_src: &mut String, out_des: &mut String, mut args: env::Args) -> bool {
+pub fn parse_input(out_src : &mut String, mut args : env::Args) -> bool {
     // first argument is excuation file
     args.next();
 
@@ -14,19 +14,10 @@ pub fn parse_input(out_src: &mut String, out_des: &mut String, mut args: env::Ar
         return false;
     }
 
-    // third argument is a directory of source images
-    if let Some(x) = args.next() {
-        out_des.push_str(&x);
-    }
-    else {
-        println!("Invalid arguments!!");
-        return false;
-    }
-
     true
 }
 
-pub fn read_bmp_list(out_list: &mut Vec<String>, dir_path: String) -> bool {
+pub fn read_bmp_list(out_list : &mut Vec<String>, dir_path : String) -> bool {
     let mut path_list = Vec::new();
 
     // read file list
