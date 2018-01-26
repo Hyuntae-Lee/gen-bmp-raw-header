@@ -1,68 +1,69 @@
 extern crate bmp;
-mod lib;
+
+mod util;
 
 use std::env;
-use lib::{parse_input, read_bmp_list};
+use util::*;
+use std::process::Command;
+use std::fs::File;
+use std::io::Write;
 
 fn main() {
     // parse user input
     let mut src_dir = String::new();
-    if parse_input(&mut src_dir, env::args()) != true {
+    let mut des_dir = String::new();
+    if parse_input(&mut src_dir, &mut des_dir, env::args()) != true {
         println!("Invalid arguments!!");
         return;
     }
 
     // get image file path list
-    let mut path_list = Vec::new();
-    if read_bmp_list(&mut path_list, src_dir) != true {
+    let mut img_path_list = Vec::new();
+    if read_bmp_list(&mut img_path_list, &src_dir) != true {
         println!("Cannot read bmp files!!");
         return;
     }
 
-    // get image info. from file
-    for path in path_list {
+    // prepare output directory
+    copy_sub_dirs(&src_dir, &des_dir);
+
+    // fill output contents
+    let mut cbit_str = String::new();
+    for img_path in img_path_list {
+        // 1. make raw file
+        // - target path
+        //  : remove root path dir of input
+        let root_dir_offset = img_path.find('/').unwrap();
+        let (_, last_path) = img_path.split_at(root_dir_offset);
+        //  : remove extension and add .h
+        let extension_offset = last_path.find('.').unwrap();
+        let (target_file, _) = last_path.split_at(extension_offset);
+        let target_file_path = format!("{0}{1}.h", &des_dir, &target_file);
+        // - make raw file
+        Command::new("bmpToRawC")
+                .arg(&img_path).arg(&target_file_path)
+                .arg("1").arg("1").arg("0").arg("2")
+                .spawn()
+                .expect("failed to execute process");;
+
+        // 2. info header
         // get image info
-        let (width, height) = get_image_info(&path);
+        let (width, height) = get_image_info(&img_path);
         // get file name
         let mut name = String::new();
-        if get_image_name(&mut name, path) != true {
+        if get_image_name(&mut name, &img_path) != true {
             continue;
         }
 
-        let str_code = format!("U16\tcbits_{0}[{1}*{2}];", &name, width, height);
-        println!("{}", str_code);
+        cbit_str.push_str(&format!("U16\tcbits_{0}[{1}*{2}];", &name, width, height));
     }
-}
 
-fn get_image_info(path: &str) -> (u32, u32) {
-    let image = match bmp::open(path) {
+    let mut file_buffer = match File::create("out_image.h") {
         Ok(x) => x,
-        Err(e) => {
-            println!("Cannot open {0} because {1}", path, e);
-            return (0, 0);
+        Err(_) => {
+            println!("Cannot write info header file");
+            return;
         },
     };
-
-    (image.get_width(), image.get_height())
-}
-
-fn get_image_name(name: &mut String, path: String) -> bool {
-    // remove directory name
-    let mut path_vec: Vec<&str> = path.split('/').collect();
-    let file_name;
-    if let Some(x) = path_vec.pop() {
-        file_name = x;
-    }
-    else {
-        return false;
-    }
-
-    // remove extensiton
-    let file_name_string = file_name.to_string();
-    let file_name_vec: Vec<&str> = file_name_string.split('.').collect();
-
-    // fill result
-    name.push_str(file_name_vec[0]);
-
-    return true
+    file_buffer.write(cbit_str.as_bytes());
 }
