@@ -40,6 +40,7 @@ fn main() {
         let (target_file, _) = last_path.split_at(extension_offset);
         let target_file_path = format!("{0}{1}.h", &des_dir, &target_file);
         // - make raw file
+        println!("{}", format!("{0} --> {1}", img_path, target_file_path));
         Command::new("bmpToRawC")
                 .arg(&img_path).arg(&target_file_path)
                 .arg("1").arg("1").arg("0").arg("2")
@@ -55,7 +56,7 @@ fn main() {
             continue;
         }
 
-        cbit_str.push_str(&format!("U16\tcbits_{0}[{1}*{2}];", &name, width, height));
+        cbit_str.push_str(&format!("U16\tcbits_{0}[{1}*{2}];\r\n", &name, width, height));
     }
 
     let mut file_buffer = match File::create("out_image.h") {
